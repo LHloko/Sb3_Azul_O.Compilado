@@ -5,8 +5,8 @@ Created on Fri May 10 17:30:58 2024
 """
 
 import numpy as np
-import Factory_V3
-import Player_V3
+from eviroment.Env_solo.S_game_V3 import Factory_V3
+from eviroment.Env_solo.S_game_V3 import Player_V3
 
 #Start class ------------------------------------------------------------------
 class Estados():
@@ -95,7 +95,6 @@ class Estados():
         players = self.players
         for i, p in enumerate(players):
             if p.me_first():
-                #print('O Jogador ', p.get_name(), 'eh o primeiro a jogar')
                 players.pop(i)
                 players.insert(0, p)
                 break
@@ -119,6 +118,7 @@ class Estados():
                 player = p
 
         player = []
+
         #Verifica se tem mais de um com a mesma pontuaçao
         for p in self.players:
             if p.score == scr:
@@ -173,12 +173,10 @@ class Estados():
         factories     = self.format_factories()
         factory_floor = self._format_fac_floor()
         ply_bord_01   = self._format_player_board(self.static_players[0])
-        #ply_bord_02   = self._format_player_board(self.static_players[1])
 
         state = {'fac'      : factories,
                  'fac-flr'  : factory_floor,
                  'ply_01'   : ply_bord_01,
-                 #'ply_02'   : ply_bord_02
        }
 
         return state

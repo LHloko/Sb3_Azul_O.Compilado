@@ -1,4 +1,4 @@
-import Board_v3
+from eviroment.Env_solo.S_game_V3 import Board_v3
 
 #Start class ------------------------------------------------------------------
 class Jogador():
@@ -59,19 +59,14 @@ SCORE = {self.score}
     '''
     def playar(self, fab, jogada):
         locus, pars, linea = jogada
-
+        
         # Pegando as ceramicas
         tiles = self.pegar_ceramica(fab, locus, pars)
-        if tiles == False: # Caso a açao de pegar no lugar ou a ceramica sejam invalidos
-            print('acao de pegar - invalida')
-            return False
+        assert tiles , "acao de pegar - invalida"
 
         # Colocando as ceramicas no tabuleiro
-        if not self.colocar_no_tabuleiro(tiles, linea):
-            print('acao de meter - invalida')
-            return False
+        assert self.colocar_no_tabuleiro(tiles, linea), "acao de meter - invalida"
 
-        #Fim
         return True
 
 

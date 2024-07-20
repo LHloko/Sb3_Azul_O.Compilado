@@ -1,4 +1,4 @@
-import Bag_v3 as Saco
+from eviroment.Env_solo.S_game_V3 import Bag_v3 as Saco
 
 #Start class ------------------------------------------------------------------
 class Fabrica():
@@ -86,7 +86,7 @@ class Fabrica():
             facture = self.manufacture() #Isso eh uma Fabrica recebendo 4 ceramicas
             self.factory_board.append(facture)
 
-        self.factory_floor.append(-1)
+        #self.factory_floor.append(-1) Retirado devio ao fato de so ter um jogador
 
     def re_manufacture_board(self):
         #Variaveis de uma Mesa
