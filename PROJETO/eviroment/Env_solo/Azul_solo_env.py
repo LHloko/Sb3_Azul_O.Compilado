@@ -1,17 +1,13 @@
+# Criando a minha mascara de aÃ§oes
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
+from typing import List, Optional
 
 # Minhas Classes
-from S_game_V3 import Factory_V3
-from S_game_V3 import State_V3
-from S_game_V3 import Player_V3
-
-# Sb3 Contrib
-from sb3_contrib.ppo_mask import MaskablePPO
-from sb3_contrib.common.maskable.utils import get_action_masks
-from typing import List, Optional
-from stable_baselines3.common.envs import IdentityEnv
+from eviroment.Env_solo.S_game_V3 import Factory_V3
+from eviroment.Env_solo.S_game_V3 import State_V3
+from eviroment.Env_solo.S_game_V3 import Player_V3
 
 class AzulEnv(gym.Env):
     metadate = {"render_modes":['rgb_array','human']}
@@ -20,30 +16,27 @@ class AzulEnv(gym.Env):
         super(AzulEnv, self).__init__()
 
         # Inicializar o ambiente
-        self.fab = Factory_V3.Fabrica()  # Instanciar a fábrica
+        self.fab = Factory_V3.Fabrica()  # Instanciar a fÃ¡brica
         self.players = [Player_V3.Jogador("AGNT")]  # Instanciar o jogador
         self.dados = [self.fab, self.fab.pocket, self.players]
         self.estado = State_V3.Estados(self.dados)
 
         # Gym enviroment
-        self.action_space = spaces.MultiDiscrete([6,4,6])
+        self.action_space = spaces.Discrete(180)
         self.observation_space = spaces.Box(low=-1, high=4, shape=(75,), dtype=int) # -1 (sem ceramica), 0:4 (ceramicas postas)
         self.render_mode = render_mode
-
-        # Sb3
-        #self.legal_moves = self.get_mask_action()
 
         # Inicializar o estado do ambiente
         self.reset()
 
     '''
     Entrada: Vazia
-    Saida: A observaçao do estado inicial do jogo 
-    Inicia um jogo do zero, com a instanciaçao de cada classe e dos jogadores 
+    Saida: A observaÃ§ao do estado inicial do jogo 
+    Inicia um jogo do zero, com a instanciaÃ§ao de cada classe e dos jogadores 
     '''
     def reset(self, seed=None, options=None):
         # Inicializar o ambiente
-        self.fab = Factory_V3.Fabrica()  # Instanciar a fábrica
+        self.fab = Factory_V3.Fabrica()  # Instanciar a fÃ¡brica
         self.players = [Player_V3.Jogador("AGNT")]  # Instanciar os jogadores =+= , Jogador.Jogador("VK")
         self.truncated = False
         self.terminated = False
@@ -54,19 +47,24 @@ class AzulEnv(gym.Env):
         # Estado inicial do jogo
         self.estado = State_V3.Estados(self.dados)
 
-        # Retornar a observação inicial do ambiente
+        # Retornar a observaÃ§Ã£o inicial do ambiente
         return self.observe(), self._get_info()
 
     '''
     Entrada: action como uma tupla com 3 valores 
     Saida: List com 'observation, reward, terminated, truncated, info'
-    Implementar lógica para executar uma ação no ambiente
+    Implementar lÃ³gica para executar uma aÃ§Ã£o no ambiente
     '''
     def step(self, action):
         reward = 0
-        jogada = list(action)
+        jogada = self._possible_actions()[action]
+        print('\n',jogada,'\n')
 
-        # Executar a ação no ambiente
+        if jogada not in self.valid_actions():
+            jogada = self.valid_actions()[0]
+            print('invalida ', jogada)
+
+        # Executar a aÃ§Ã£o no ambiente
         self.players[0].playar(self.fab ,jogada)
         self.render() if self.render_mode=='human' else None
 
@@ -83,12 +81,12 @@ class AzulEnv(gym.Env):
 
         # Recompensa imediata
         # ???
-        if action[2] < 5:
+        '''if action[2] < 5:
             reward += 1
         else:
-            reward -= 1
+            reward -= 1'''
 
-        # Atualizar o estado do jogo e retornar a observação, recompensa e sinalizadores de término
+        # Atualizar o estado do jogo e retornar a observaÃ§Ã£o, recompensa e sinalizadores de tÃ©rmino
         observation = self.observe()
         info = self._get_info()
 
@@ -96,7 +94,7 @@ class AzulEnv(gym.Env):
 
     '''
     Entrada: agent
-    Saida: A observaçao do ambiente (fabricas-chao_de_fabrica-tabuleiros) como 
+    Saida: A observaÃ§ao do ambiente (fabricas-chao_de_fabrica-tabuleiros) como 
     uma matriz.
     '''
     def observe(self):
@@ -107,7 +105,7 @@ class AzulEnv(gym.Env):
         factory_floor   = state['fac-flr']
         ply_bord_01     = state['ply_01']
 
-        # Processar o estado para criar as observações
+        # Processar o estado para criar as observaÃ§Ãµes
         table = np.concatenate((factories, factory_floor, ply_bord_01))
 
         observations = np.array(table)
@@ -117,23 +115,15 @@ class AzulEnv(gym.Env):
 
     '''
     Entrada: Vazia
-    Saida: informaçao como um dict de quem e o primeiro jogador e se eh o ultimo round
+    Saida: informaÃ§ao como um dict de quem e o primeiro jogador e se eh o ultimo round
     '''
     def _get_info(self):
-        first_player = None
         is_last_round = False
 
-        if self.estado.fim_de_turno:
-            for player in self.players:
-                if player.me_have_minus_one_gd:
-                    first_player = player.get_name()
-                    break
-    
         if self.estado.is_last_round_to_end():
             is_last_round = True
 
         info = {
-            "first_player": first_player,
             "is_last_round": is_last_round
         }
     
@@ -145,247 +135,220 @@ class AzulEnv(gym.Env):
     '''
     def render(self):
         if self.render_mode == "human":
+            print(self.fab)
             self.estado.game_player_status()
         pass
 
-    def get_mask_action(self):
-        pass
+    # ???
+    def valid_actions(self):
+        return sorted(self._valid_lines())
 
 # =========================================================================== #
-    '''
-    Para construir uma mascara de açao que impeça jogadas invalidas eu preciso 
-    me atentar para os seguintes casos: 
-        1- nao posso pegar de fabricas vazias, isto eh, no primeiro elemento da
-           tupla preciso que sejam retiradas as fabricas vazias 
+    def _pre_process_line_board(self):
+        lines  = self.estado.get_states()['ply_01']
 
-        2- nao posso selecionar uma cor que nao exista na fabrica escolhida 
+        lns =[]
 
-        3- nao posso colocar ceramicas em linhas que elas ja existam 
+        lns.append([lines[25]])
+        lns.append([lines[26],lines[27]])
+        lns.append([lines[28],lines[29],lines[30]])
+        lns.append([lines[31],lines[32],lines[33],lines[34]])
+        lns.append([lines[35],lines[36],lines[37],lines[38],lines[39]])
 
-    Talvez eu deva fazer uma funçao que gere todas as possibilidades de jogada 
-    por exemplo se tenho 2 fabricas e o chao de fabrica 
+        return lns
 
-    1 - [0,0,2,2] 
-    3 - [0,1,0,4] 
+    def _pre_process_wall_board(self):
+        wall = self.estado.get_states()['ply_01']
 
-    5 - [0,0,1,2,3,4]
+        lns=[]
+        idx = 0
+        for i in range(5):
+            l =[]
+            for j in range(5):
+                l.append(wall[idx])
+                idx += 1
+            lns.append(l)
 
-    entao eu gero os primeiro possiveis valores [1,3,5]
+        print('wall', lns)
+        return lns
 
-    Com base nisso eu tenho agora os conjuntos de pseudo açoes possiveis 
-    [1,0,0]
-    [1,0,1]
-    [1,0,2]
-    [1,0,3]
-    [1,0,4]
-    [1,0,5]
-
-    [1,2,0]
-    [1,2,1]
-    [1,2,2]
-    [1,2,3]
-    [1,2,4]
-    [1,2,5]
-    
-    ... 
-
-    Depois eu preciso retirar desse conjunto aqueles onde o tabuleiro ja esta 
-    preenchido ou tem outras ceramicas na linhas 
-
-    '''
-
-    #
-    def _get_fabs_pre_process(self):
+    def _pre_process_fabs(self):
         state = self.estado.get_states()
-        factories   = state['fac']
+        factories = state['fac']
+        #print('fabricas: ', factories)
         facs = []
-        for i, j in enumerate(range(0, 20, 4)):
+
+        for i in range(5):
             f = []
-            for _ in range(4):
-                f.append(factories[j])
+            for j in range(4):
+                f.append(factories[i*4 + j])
             facs.append(f)
+
+        floor = state['fac-flr']
+        #print('piso: ', floor)
+
+        fl = []
+        for i in floor:
+            if i != -1:
+                fl.append(i)
+        facs.append(fl)
 
         return facs
 
-
-    # Recorta as fabricas e o chao de fabrica possivel
-    def _get_mask_fab(self):
+    def _valid_fabricas(self):
         state = self.estado.get_states()
         factories   = state['fac']
         floor       = state['fac-flr']
 
-        print('fabricvas ' ,factories)
-        print('piso ' ,floor)
+        facs = []
+        idx = 0
+        for i in range(0, 20, 4):
+            if factories[i] != -1:
+                facs.append(idx)
+            else:
+                facs.append(-1)
+            idx += 1
 
-        fabs = []
-        for i, j in enumerate(range(0,20, 4)):
-            if factories[j] != -1:
-                fabs.append(i)
+        facs.append(-1) if floor[0] == -1 else facs.append(5)
 
-        if floor[0] != -1:
-            fabs.append(5)
+        return facs
 
-        print(fabs)
+    def _valid_cores(self):
+        state = self._valid_fabricas()
+        state = [valid for valid in state if valid != -1] # comprime para so validos
 
-        return fabs
+        fabs = self._pre_process_fabs()
 
-    # Pega os possiveis locais de pegagem de ceramica e gera listas com eles
-    def _get_mask_catch(self, idk):
-        floor = self.estado.get_states()['fac-flr']
-        factories   = self._get_fabs_pre_process()
-        picks_possibles = None
+        facAndColor = []
 
-        if idk != 5:
-            picks_possibles = factories[idk]
-        else:
-            picks_possibles = floor
+        for i in state:
+            for j in fabs[i]:
+                facAndColor.append([i,j])
 
+        return facAndColor
 
-        return picks_possibles
+    def _valid_lines(self):
+        states = self._valid_cores()
+        #meter sempre o piso do tab com opcao + SEMPRE + 'SONS DE TROVAO'
+        lines  = self._pre_process_line_board()
 
+        valid_play = []
 
+        # Adicionando o piso como uma opcao
+        for f_c in states:
+            stp = f_c.copy()
+            stp.append(5)
+            if stp not in valid_play:
+                valid_play.append(stp)
 
+        # Pega o indice das linhas vazias
+        empty = [i for i, sublista in enumerate(lines) if all(x == -1 for x in sublista)]
 
-   # def get_mask_action(self):
-        state = self.estado.get_states()
+        # Cria acoes possiveis com as linhas vazias
+        for i in states:
+            for j in empty:
+                stp = i.copy()
+                stp.append(j)
+                if stp not in valid_play:
+                    valid_play.append(stp)
 
-        factories       = state['fac']
-        factory_floor   = state['fac-flr']
-        ply_bord_01     = state['ply_01']
+        # Pega o indice das linhas parcialmente cheias
+        parcel_empty = [i for i, sublista in enumerate(lines) if any(x == -1 for x in sublista) and not all(x == -1 for x in sublista)]
 
+        # Cria acoes possiveis com as linhas parcialmente cheias
+        for f_c in states:
+            cor = f_c[1]
+            for parcel in parcel_empty:
+                color_line = lines[parcel][0]
+                if color_line == cor:
+                    stp = f_c.copy()
+                    stp.append(parcel)
+                    valid_play.append(stp)
 
-        # Retorna os locais possiveis para se pegar ceramica
-        pick = []
+        # Filtra as linhas cheias
+        full_line = [i for i, sublista in enumerate(lines) if all(x != -1 for x in sublista)]
 
+        for v in valid_play:
+            if v[2] in full_line:
+                valid_play.remove(v)
 
+        # Filtra a parede
+        wall = self._pre_process_wall_board()
 
+        for v in valid_play:
+            if v[2] != 5:
+                if v[1] in wall[v[2]]:
+                    print('parede',wall[v[2]])
+                    print('ceramica',v[1])
+                    print('linha', v[2])
+                    valid_play.remove(v)
 
+        return valid_play
 
+    def _invalid_actions(self):
+        valid_actions = self._valid_actions()
 
+        resultados = []
+        for primeiro in range(6):
+            for meio in range(5):
+                for ultimo in range(6):
+                    lista = [primeiro, meio, ultimo]
+                    resultados.append(lista)
 
-        # Retorna as cores possiveis para se pegar
-        color = []
+        def converter_para_tuplas(lista):
+            return tuple(tuple(sub_lista) for sub_lista in lista)
+        
+        # Define as listas válidas e possíveis
+        validas = valid_actions
+        possiveis = resultados
 
-        # Retorna os locais possiveis para se colocar ceramica
-        put = []
+        # Converte as listas em tuplas para operações de conjuntos
+        validas_tuplas = set(converter_para_tuplas(validas))
+        possiveis_tuplas = set(converter_para_tuplas(possiveis))
+        
+        # Calcula as listas inválidas (listas possíveis que não são válidas)
+        invalidas_tuplas = possiveis_tuplas - validas_tuplas
+        
+        # Converte as tuplas de volta para listas
+        invalidas = [list(sub_lista) for sub_lista in invalidas_tuplas]
 
+        return invalidas
 
-
-        mask = [pick,color,put]
-
-        return mask
-
-
-
+    def _possible_actions(self):
+        resultados = []
+        for primeiro in range(6):
+            for meio in range(5):
+                for ultimo in range(6):
+                    lista = [primeiro, meio, ultimo]
+                    resultados.append(lista)
+        return resultados
 
 #==============================================================================
+    def action_masks_fn(self):
+        actions = np.zeros(180)
+        pos_act = self._possible_actions()
+        val_act = sorted(self.valid_actions())
+        #print(val_act)
 
+        idx = 0
+        for i, p in enumerate(pos_act):
+            if len(val_act) == idx:
+                break
+
+            if val_act[idx] == p:
+                actions[i] = 1
+                idx+=1
+
+        return actions
+
+#==============================================================================
 # Exemplo de uso:
-env = None
-print("Estado:", env.state)
-print("Ações inválidas:", env.invalid_actions)
-print("Máscara de ações:", env.action_masks())
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-'''
-# Crie uma instância do ambiente personalizado
 env = AzulEnv('human')
-
-# Reinicie o ambiente
-observation, info = env.reset()
-
-print(observation)
-print(info)
-
-
-# Execute uma ação aleatória no ambiente
-
-#action = env.action_space.sample()
-#observation, reward, terminated, truncated, info = env.step(action)
-
-terminated = False
-while terminated != True:
-    a = int(input())
-    b = int(input())
-    c = int(input())
-
-    if a == 10:
-        break
-
-    action = [a,b,c]
-    print(action)
-    
-    observation, reward, terminated, truncated, info = env.step(action)
-    env._get_fabs_pre_process()
-
-
-# Imprima informações sobre o passo atual
-print("Observation:\n", observation)
-print("Reward:", reward)
-print("truncated:", truncated)
-print("terminated:", terminated)
-print("Info:", info)
-   #
-
-for step in range(max_steps):
-# Execute uma ação aleatória no ambiente
-action = env.action_space.sample()
-print(action)
-observation, reward, terminated, truncated, info = env.step(action)
-
-# Imprima informações sobre o passo atual
-print("Observation:\n", observation)
-print("Reward:", reward)
-print("truncated:", truncated)
-print("terminated:", terminated)
-print("Info:", info)
-
-# Verifique se o episódio terminou
-if truncated or terminated:
-    print("Episode finished after {} steps".format(step+1))
-    env.reset()
-
-'''
-
+env.reset()
+env.render()
+env._pre_process_wall_board()
+for i in range(1000):
+    print(env.valid_actions())
+    #input()
+    env.step(1)

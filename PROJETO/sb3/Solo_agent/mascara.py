@@ -1,16 +1,9 @@
 from typing import List, Optional
+
 import numpy as np
 from gymnasium import spaces
 from stable_baselines3.common.envs import IdentityEnv
-from sb3_contrib.common.wrappers import ActionMasker
 
-from sb3_contrib import MaskablePPO
-from sb3_contrib.common.envs import InvalidActionEnvMultiDiscrete
-from sb3_contrib.common.maskable.evaluation import evaluate_policy
-from sb3_contrib.common.maskable.utils import get_action_masks
-
-from eviroment.Env_solo import S_game_V3
-from eviroment.Env_solo import Azul_solo_env as azul
 
 class InvalidActionEnvMultiDiscrete(IdentityEnv[np.ndarray]):
     """
@@ -26,19 +19,25 @@ class InvalidActionEnvMultiDiscrete(IdentityEnv[np.ndarray]):
         n_invalid_actions: int = 0,
     ):
         if dims is None:
-            dims = [6,5,6]
+            dims = [1, 1]
 
         if n_invalid_actions > sum(dims) - len(dims):
             raise ValueError(f"Cannot find a valid action for each dim. Set n_invalid_actions <= {sum(dims) - len(dims)}")
 
         space = spaces.MultiDiscrete(dims)
+        print(space)
         self.n_invalid_actions = n_invalid_actions
+        print(self.n_invalid_actions)
         self.possible_actions = np.arange(sum(dims))
+        print(self.possible_actions)
         self.invalid_actions: List[int] = []
+        print(self.invalid_actions)
+
         super().__init__(space=space, ep_length=ep_length)
 
     def _choose_next_state(self) -> None:
         self.state = self.action_space.sample()
+        print(self.state)
 
         converted_state: List[int] = []
         running_total = 0
@@ -46,9 +45,20 @@ class InvalidActionEnvMultiDiscrete(IdentityEnv[np.ndarray]):
             converted_state.append(running_total + self.state[i])
             running_total += self.action_space.nvec[i]
 
+        print(converted_state)
+
         # Randomly choose invalid actions that are not the current state
         potential_invalid_actions = [i for i in self.possible_actions if i not in converted_state]
+        print(potential_invalid_actions)
+
         self.invalid_actions = np.random.choice(potential_invalid_actions, self.n_invalid_actions, replace=False).tolist()
+        print(self.invalid_actions)
 
     def action_masks(self) -> List[bool]:
         return [action not in self.invalid_actions for action in self.possible_actions]
+
+env = InvalidActionEnvMultiDiscrete([6,5,6])
+env._choose_next_state()
+print(env.action_masks())
+
+
