@@ -3,38 +3,57 @@
 UGA BUGA TESTANTO O APRENDIZADO COM O NIVEL MAIS BAIXO DE ABSTRAÇAO KEKEKEK 
 
 """
-
+# Criando a minha mascara de acoes
 import gymnasium as gym
-from gym import spaces
+from gymnasium import spaces
 import numpy as np
+from typing import List, Optional
 
 # Minhas Classes
-from Game_classes_v02 import Factories
-from Game_classes_v02 import States
-from Game_classes_v02 import Player
+from eviroment.Env_mul.M_game_v3 import Factory_V3
+from eviroment.Env_mul.M_game_v3 import State_V3
+from eviroment.Env_mul.M_game_v3 import Player_V3
 
 class AzulEnv(gym.Env):
-    metadate = {"render_modes":['ansi']}
+    metadate = {"render_modes":['rgb_array','human']}
 
     def __init__(self, render_mode = None):
         super(AzulEnv, self).__init__()
 
-        # Definir os espaços de ação e observação
-        self.action_space = spaces.Tuple([
-            spaces.Discrete(6),  # Lugar onde pegar as cerâmicas (0-5)
-            spaces.Discrete(5),  # Cerâmica a pegar (0-4)
-            spaces.Discrete(6)   # Lugar onde por as cerâmicas pegas (0-5)
-        ])
+        # Inicializar o ambiente
+        self.fab = Factory_V3.Fabrica()  # Instanciar a fÃ¡brica
+        self.players = [Player_V3.Jogador("AGNT_02"), Player_V3.Jogador("AGNT_01")]  # Instanciar o jogador
+        self.dados = [self.fab, self.fab.pocket, self.players]
+        self.estado = State_V3.Estados(self.dados)
 
-        # Define o espaço de observaçao como uma tabela 30x10 com valores de -2 a 4
-        # -2 (local vazio), -1 (sem ceramica), 0:4 (ceramicas postas)
-        self.observation_space = spaces.Box(low=-2, high=4, shape=(30, 10), dtype=np.int)
+        # Gym enviroment
+        self.action_space = spaces.Discrete(180)
+        self.observation_space = spaces.Box(low=-1, high=4, shape=(75,), dtype=int) # -1 (sem ceramica), 0:4 (ceramicas postas)
+        self.render_mode = render_mode
 
         # Inicializar o estado do ambiente
         self.reset()
 
-    def __str__(self):
-        return 
+    '''
+    Entrada: Vazia
+    Saida: A observaçao do estado inicial do jogo 
+    Inicia um jogo do zero, com a instanciaçao de cada classe e dos jogadores 
+    '''
+    def reset(self, seed=None, options=None):
+        # Inicializar o ambiente
+        self.fab = Factory_V3.Fabrica()  # Instanciar a fÃ¡brica
+        self.players = [Player_V3.Jogador("AGNT_02"), Player_V3.Jogador("AGNT_01")]  # Instanciar o jogador
+        self.truncated = False
+        self.terminated = False
+
+        # Dados iniciais do ambiente
+        self.dados = [self.fab, self.fab.pocket, self.players]
+
+        # Estado inicial do jogo
+        self.estado = State_V3.Estados(self.dados)
+
+        # Retornar a observaÃ§Ã£o inicial do ambiente
+        return self.observe(), self._get_info()
 
     '''
     Entrada: agent
@@ -55,6 +74,7 @@ class AzulEnv(gym.Env):
 
         observations = np.concatenate((table,ply_bord_01,ply_bord_02), axis = 0)
 
+        print('observations', observations)
         return observations
 
 
@@ -116,29 +136,8 @@ class AzulEnv(gym.Env):
         return info
 
 
-    '''
-    Entrada: Vazia
-    Saida: A observaçao do estado inicial do jogo 
-    Inicia um jogo do zero, com a instanciaçao de cada classe e dos jogadores 
-    '''
-    def reset(self):
-        # Inicializar o ambiente
-        self.fab = Factories.Fabrica()  # Instanciar a fábrica
-        self.players = [Player.Jogador("LH"), Player.Jogador("DL")]  # Instanciar os jogadores =+= , Jogador.Jogador("VK")
 
-        # Dados iniciais do ambiente
-        self.dados = [self.fab, self.fab.pocket, self.players]
+#_----------------------------------------------------------------------------_
 
-        # Estado inicial do jogo
-        self.estado = States.Estados(self.dados)
-
-        # Retornar a observação inicial do ambiente
-        return self.observe()
-
-
-def main():
-    print("deixa o cara jogar, po")
-
-if __name__ == "__main__":
-    main()
-
+env = AzulEnv()
+env.reset()

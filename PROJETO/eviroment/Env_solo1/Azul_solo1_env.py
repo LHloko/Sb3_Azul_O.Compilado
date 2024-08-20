@@ -1,13 +1,13 @@
-# Criando a minha mascara de acoes
+# Criando a minha mascara de aÃ§oes
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 from typing import List, Optional
 
 # Minhas Classes
-from eviroment.Env_solo.S_game_V3 import Factory_V3
-from eviroment.Env_solo.S_game_V3 import State_V3
-from eviroment.Env_solo.S_game_V3 import Player_V3
+from eviroment.Env_solo1.S_game_V3 import Factory_V3
+from eviroment.Env_solo1.S_game_V3 import State_V3
+from eviroment.Env_solo1.S_game_V3 import Player_V3
 
 class AzulEnv(gym.Env):
     metadate = {"render_modes":['rgb_array','human']}
@@ -16,7 +16,7 @@ class AzulEnv(gym.Env):
         super(AzulEnv, self).__init__()
 
         # Inicializar o ambiente
-        self.fab = Factory_V3.Fabrica()  # Instanciar a fabrica
+        self.fab = Factory_V3.Fabrica()  # Instanciar a fÃ¡brica
         self.players = [Player_V3.Jogador("AGNT")]  # Instanciar o jogador
         self.dados = [self.fab, self.fab.pocket, self.players]
         self.estado = State_V3.Estados(self.dados)
@@ -36,7 +36,7 @@ class AzulEnv(gym.Env):
     '''
     def reset(self, seed=None, options=None):
         # Inicializar o ambiente
-        self.fab = Factory_V3.Fabrica()  # Instanciar a fabrica
+        self.fab = Factory_V3.Fabrica()  # Instanciar a fÃ¡brica
         self.players = [Player_V3.Jogador("AGNT")]  # Instanciar os jogadores =+= , Jogador.Jogador("VK")
         self.truncated = False
         self.terminated = False
@@ -58,36 +58,30 @@ class AzulEnv(gym.Env):
     def step(self, action):
         reward = 0
         jogada = self._possible_actions()[action]
-
         valids =self.valid_actions()
 
         if jogada not in valids:
-            jogada = valids[0]
+                jogada = valids[0]
 
         # Executar a acoes no ambiente
         self.players[0].playar(self.fab ,jogada)
         self.render() if self.render_mode=='human' else None
 
-        if self.estado.fim_de_turno(): # Verificar se o turno acabou
-            reward += self.players[0].pontuar() # Obter a recompensa do fim do turno
 
+        if self.estado.fim_de_turno(): # Verificar se o turno acabou
+            reward += self.players[0].pontuar()
             if self.estado.is_game_over(): # Verificar se o jogo acabou
                 self.terminated = True
-                reward += self.estado.fim_de_jogo()  # Obter a recompensa do fim do jogo
+                self.estado.fim_de_jogo()
             else: # senao, reinicia o ambiente
                 self.estado.iniciar_turno()
-
-        # Recompensa imediata
-        '''if action[2] < 5:
-            reward += 1
-        else:
-            reward -= 1'''
 
         # Atualizar o estado do jogo e retornar a observaÃ§Ã£o, recompensa e sinalizadores de tÃ©rmino
         observation = self.observe()
         info = self._get_info()
 
         return observation, reward, self.terminated, self.truncated, info
+
 
     '''
     Entrada: agent
@@ -131,10 +125,9 @@ class AzulEnv(gym.Env):
     Saida: O jogo rederizado 
     '''
     def render(self):
-        if self.render_mode == "human":
-            print(self.fab)
-            self.estado.game_player_status()
-        pass
+        print(self.fab)
+        self.estado.game_player_status()
+
 
     # ???
     def valid_actions(self):
@@ -359,18 +352,19 @@ class AzulEnv(gym.Env):
 
 #==============================================================================
 # Exemplo de uso:
-
-env = AzulEnv()
+'''
+env = AzulEnv('human')
 env.reset()
 env.render()
 env._pre_process_wall_board()
 
 trun = False
 
-for i in range(1000):
-    #input()
-    print(env.action_masks_fn())
+
+for i in range(100):
+    input()
     if(trun):
-        print(i)
         break
-    _, _, trun, _,_ = env.step(0)
+    observation, reward, term, trun, info= env.step(0)
+    print('RECOMPENSA => ', reward)
+'''

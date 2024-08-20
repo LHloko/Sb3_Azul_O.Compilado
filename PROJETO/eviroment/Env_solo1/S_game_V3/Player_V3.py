@@ -1,11 +1,12 @@
-from eviroment.Env_mul.M_game_v3 import Board_v3
+from eviroment.Env_solo1.S_game_V3 import Board_v3
 
 #Start class ------------------------------------------------------------------
 class Jogador():
 
     def __init__(self, name):
         self.board = Board_v3.Board(name)
-        self.score = 0
+        self.score_jogo = 0
+        self.score_agente = 0
         self.name = name
 
     def get_name(self):
@@ -15,12 +16,13 @@ class Jogador():
         return self.board
 
     def get_score(self):
-        return self.score
+        return self.score_jogo
 
     def __str__(self):
         return f'''
 PLAYER [[[ {self.name} ]]]
-SCORE = {self.score}
+SCORE Jogo = {self.score_jogo}
+Score Agente = {self.score_agente}
 {self.board}
     '''
 
@@ -59,19 +61,14 @@ SCORE = {self.score}
     '''
     def playar(self, fab, jogada):
         locus, pars, linea = jogada
-
+        
         # Pegando as ceramicas
         tiles = self.pegar_ceramica(fab, locus, pars)
-        if tiles == False: # Caso a açao de pegar no lugar ou a ceramica sejam invalidos
-            print('acao de pegar - invalida')
-            return False
+        assert tiles , "acao de pegar - invalida"
 
         # Colocando as ceramicas no tabuleiro
-        if not self.colocar_no_tabuleiro(tiles, linea):
-            print('acao de meter - invalida')
-            return False
+        assert self.colocar_no_tabuleiro(tiles, linea), "acao de meter - invalida"
 
-        #Fim
         return True
 
 
@@ -124,13 +121,25 @@ SCORE = {self.score}
     Soma os pontos da tabela e a reseta ao fim de uma rodada de jogo  
     '''
     def pontuar(self):
-        score_total = 0
-        score_total += self.board.emparedar()
-        score_total -= self.board.des_somar_ceramicas()
+        score_jogo = 0
+        score_recompensa = 0
+        score_sub = self.board.des_somar_ceramicas()
 
-        self.score = score_total
+        recompensa = self.board.emparedar()
 
-        return score_total
+        # Salva a pontuaçao do jogador
+        score_jogo += recompensa[0]
+        score_jogo -= score_sub
+
+        # Salva a pontuaçao do agente
+        score_recompensa += recompensa[1]
+        score_recompensa -= score_sub
+
+        self.score_jogo += score_jogo
+        #
+        self.score_agente += score_recompensa
+
+        return score_recompensa
 
     '''
     Entrada: Vazia 
@@ -141,7 +150,7 @@ SCORE = {self.score}
         score_final = 0
         score_final += self.board.last_pontuar()
 
-        self.score = score_final
+        self.score_jogo += score_final
 
         return score_final
 

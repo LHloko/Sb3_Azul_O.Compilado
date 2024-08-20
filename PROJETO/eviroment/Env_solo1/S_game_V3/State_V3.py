@@ -5,8 +5,8 @@ Created on Fri May 10 17:30:58 2024
 """
 
 import numpy as np
-from eviroment.Env_solo.S_game_V3 import Factory_V3
-from eviroment.Env_solo.S_game_V3 import Player_V3
+from eviroment.Env_solo1.S_game_V3 import Factory_V3
+from eviroment.Env_solo1.S_game_V3 import Player_V3
 
 #Start class ------------------------------------------------------------------
 class Estados():
@@ -29,7 +29,6 @@ class Estados():
     def is_game_over(self):
         for ply in self.players:
             if ply.board_full():
-                #print(f"======== O JOGADOR {ply.get_name()} TERMINOU O GAME AZUL ========")
                 return True
 
         return False
@@ -48,8 +47,7 @@ class Estados():
         win = self.is_winner()
         if isinstance(win, int):
             print(f"======== O JOGO EMPATOU com SOCORE: {win} ========")
-        else:
-            #print(f"======== O JOGADOR {win.get_name()} GANHOU com SOCORE: {win.get_score()} ========")
+
             pass
         
         return pontos
@@ -62,9 +60,6 @@ class Estados():
     def fim_de_turno(self):
         # Verifico se as fabricas e o chao estao vazios
         if self.fab.is_board_empty() and self.fab.is_floor_empty():
-            #for p in self.players:
-                # Somo os pontos e preencho a parede
-                #p.pontuar()
             return True
 
         return False
@@ -114,7 +109,7 @@ class Estados():
 
         #pega a maior pontuaçao
         for p in self.players:
-            if p.score > scr:
+            if p.score_jogo > scr:
                 scr = p.score
                 player = p
 
@@ -122,13 +117,13 @@ class Estados():
 
         #Verifica se tem mais de um com a mesma pontuaçao
         for p in self.players:
-            if p.score == scr:
+            if p.score_jogo == scr:
                 player.append(p)
 
         if len(player) == 1:
             return player[0]
         else:
-            return player[0].score
+            return player[0].score_jogo
 
 
     '''

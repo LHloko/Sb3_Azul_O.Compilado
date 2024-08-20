@@ -1,11 +1,11 @@
-from eviroment.Env_mul.M_game_v3 import Bag_v3 as Saco
+from eviroment.Env_solo1.S_game_V3 import Bag_v3 as Saco
 
 #Start class ------------------------------------------------------------------
 class Fabrica():
 
     def __init__(self):
         #Variaveis de uma Mesa
-        self.num_factorys = 5       #Define o numero padrao de fabricas para 2 players
+        self.num_factorys = 3       #Define o numero padrao de fabricas para 2 players
         self.factory_board = []     #Cria a o circulo de fabricas como uma list
         self.factory_floor = []     #Cria o chao de fabrica como uma list
         self.pocket = Saco.Bag()   #Instancia de um saco (rsrs) de ceramicas
@@ -53,8 +53,6 @@ class Fabrica():
           {self.factory_board[0]}\n
   * 1 *                  * 2 *
 {self.factory_board[1]}      {self.factory_board[2]}\n
-  * 3 *                  * 4 *      
-{self.factory_board[3]}      {self.factory_board[4]}  
 \nCHAO DE FABRICA: 
 {self.factory_floor}\n"""
 
@@ -86,7 +84,7 @@ class Fabrica():
             facture = self.manufacture() #Isso eh uma Fabrica recebendo 4 ceramicas
             self.factory_board.append(facture)
 
-        self.factory_floor.append(-1)
+        #self.factory_floor.append(-1) Retirado devio ao fato de so ter um jogador
 
     def re_manufacture_board(self):
         #Variaveis de uma Mesa
@@ -192,7 +190,7 @@ class Fabrica():
         for i in range(self.num_factorys):
             if self.is_manufacture_empty(i):
                 cont+=1
-        if cont == 5:
+        if cont == 3:
             return True
 
         return False

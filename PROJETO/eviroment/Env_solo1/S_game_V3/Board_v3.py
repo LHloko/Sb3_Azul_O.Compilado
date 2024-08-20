@@ -245,7 +245,6 @@ Lixo do tabuleiro:
     '''
     Entrada: Vazia 
     Saida: 
-
     '''
     def emparedar(self):
         '''
@@ -255,10 +254,13 @@ Lixo do tabuleiro:
         # Jogar no lixo as ceramicas sobressalentes 
         '''
         pontos = 0
+        pontos_agnt = 0
 
         for l in range(5):
             if self.line_adj_is_full(l):
                 pontos += 1
+                pontos_agnt += 1
+
                 #cor da ceramica a ser colocada na parede
                 cor = self.pattern[l][0][0]
 
@@ -273,6 +275,7 @@ Lixo do tabuleiro:
 
                 #Somar os pontos
                 pontos += self.somar_ceramicas(l, column)
+                pontos_agnt += self.pontuar_recompensa(l, column)
 
                 #Resetar as posiçoes e manda pro lixo
                 pattern = self.get_pattern(l)
@@ -284,7 +287,7 @@ Lixo do tabuleiro:
                 for _ in range(len(pattern) - 1):
                     self.trash.append(cor)
 
-        return pontos
+        return [pontos, pontos_agnt]
 
 
     '''
@@ -536,6 +539,59 @@ Lixo do tabuleiro:
         if wall[0][4][1] == True:
             pontos += 10
 
+        return pontos
+
+    '''
+    Entrada: Vazia 
+    Saida: Vazia 
+    Calcula a pontuaçao no final do jogo para a recompensa do agente
+    '''
+    def pontuar_recompensa(self, line, column):
+        wall = self.wall
+        pontos = 0
+
+       # Função auxiliar para somar pontos em uma direção específica
+        def contar_ceramicas(l, c, delta_l, delta_c):
+            pontos_direcao = 0
+            while 0 <= l < 5 and 0 <= c < 5:
+                if wall[l][c][1] == True:
+                    pontos_direcao += 1
+                else:
+                    break
+                l += delta_l
+                c += delta_c
+            return pontos_direcao
+    
+        # Somar pontos nas quatro direções a partir da célula (line, column)
+        pontos += contar_ceramicas(line - 1, column, -1, 0)  # Para cima
+        pontos += contar_ceramicas(line + 1, column, 1, 0)   # Para baixo
+        pontos += contar_ceramicas(line, column - 1, 0, -1)  # Para esquerda
+        pontos += contar_ceramicas(line, column + 1, 0, 1)   # Para direita
+
+
+        # Verificar linha horizontal completa
+        if all(cell[1] == True for cell in wall[line]):
+            pontos += 2
+    
+        # Verificar coluna vertical completa
+        if all(wall[i][column][1] == True for i in range(5)):
+            pontos += 7
+    
+        # Verificar padrões diagonais relacionados à jogada
+        # Checar qual diagonal a jogada pode ter completado
+    
+        # Diagonal principal (canto superior esquerdo ao inferior direito)
+        if line == column:
+            if all(wall[i][i][1] == True for i in range(5)):
+                pontos += 10
+    
+        # Diagonal secundária (canto superior direito ao inferior esquerdo)
+        if line + column == 4:
+            if all(wall[i][4-i][1] == True for i in range(5)):
+                pontos += 10
+
+
+        #retornar os pontos
         return pontos
 
 #End class --------------------------------------------------------------------
